@@ -17,12 +17,16 @@ target_compile_options(Inferno PRIVATE -Wno-deprecated-declarations)
 target_include_directories(Inferno PRIVATE include)
 
 
+
 # Find CUDA and UPCXX
 find_package(CUDA)
 find_package(UPCXX)
 
 # Link UPCXX
 target_link_libraries(Inferno PUBLIC UPCXX::upcxx)
+
+# Link CUDA libs
+target_link_libraries(Inferno PUBLIC -lcublas -lcusparse)
 
 
 # Driver

@@ -10,6 +10,11 @@
 #include <chrono>
 
 
+#include <cuda.h>
+#include <cublas.h>
+#include <cusparse.h>
+
+#include <upcxx/upcxx.hpp>
 
 
 #endif
