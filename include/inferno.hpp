@@ -6,10 +6,11 @@
 
 #include "Log.hpp"
 #include "Timer.hpp"
-#include "SpMatCsr.hpp"
+#include "DistSpMatCsr.hpp"
 
 
 namespace inferno {
+
 
 } //inferno
 
