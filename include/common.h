@@ -37,6 +37,7 @@ public:
 
 	using Device = upcxx::gpu_default_device;
 
+	/* Give this process the entire GPU */
     static upcxx::device_allocator<Device> ReserveAll()
     {
         size_t free, total;
@@ -48,7 +49,7 @@ public:
 
     static void SetDevice()
     {
-        CUDA_CHECK(cudaSetDevice(Device::auto_device_id));
+        CUDA_CHECK(cudaSetDevice(upcxx::local_team().rank_me()));
     }
 
 };
@@ -57,7 +58,6 @@ public:
 namespace globals {
 
 	using Device = upcxx::gpu_default_device;
-
 	upcxx::device_allocator<Device> allocator;
 
 }
