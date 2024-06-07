@@ -8,23 +8,12 @@
 
 namespace inferno{
 
-template <typename I, typename N, typename Device=upcxx::gpu_default_device>
+template <typename I, typename N>
 class DistSpMatCsr 
 {
 public:
 
 
-    template <typename T>
-    using dev_ptr = upcxx::global_ptr<T, upcxx::memory_kind::cuda_device> ;
-
-    template <typename T>
-    using dist_dev_ptr = upcxx::dist_object<upcxx::global_ptr<T, upcxx::memory_kind::cuda_device>> ;
-
-    template <typename T>
-    using host_ptr = upcxx::global_ptr<T> ;
-
-    template <typename T>
-    using dist_host_ptr = upcxx::dist_object<upcxx::global_ptr<T>> ;
 
 	// row, column, val
 	using coo_triple = std::tuple<I, I, N>;
@@ -38,8 +27,8 @@ public:
 
         proc_cube.reset(new ProcessCube(proc_rows, proc_cols, proc_layers));
 
-        rank = upcxx::rank_me();
-        world_size = upcxx::rank_n();
+        MPI_Comm_rank( MPI_COMM_WORLD, &(this->rank));
+        MPI_Comm_size( MPI_COMM_WORLD, &(this->world_size));
 
         assert(world_size == proc_cube->get_total_procs());
 
@@ -114,7 +103,7 @@ public:
     void local_spgemm() {/* TODO */}
 
     
-    upcxx::future<> get_remote_tile()
+    void get_remote_tile()
     {
         /* TODO */
     }
@@ -135,9 +124,6 @@ private:
     I nnz;
     
     // distributed objects containing pointers to csr arrays
-    dist_dev_ptr<N> vals;
-    dist_dev_ptr<I> rowinds;
-    dist_dev_ptr<I> colptrs;
 
     // Am I split along rows or columns?
     bool row_split;

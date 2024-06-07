@@ -9,13 +9,19 @@
 #include <algorithm>
 #include <chrono>
 #include <cassert>
+#include <memory>
+#include <string>
+#include <sstream>
 
 
 #include <cuda.h>
 #include <cublas.h>
 #include <cusparse.h>
 
-#include <upcxx/upcxx.hpp>
+#include <nvshmem.h>
+#include <nvshmemx.h>
+
+#include <mpi.h>
 
 
 #define CUDA_CHECK(call) {                                                 \
@@ -30,56 +36,60 @@
 namespace inferno {
 
 
+namespace globals {
+
+    int mpi_rank;
+    int mpi_world_size;
+
+    int n_devs;
+
+    nvshmemx_init_attr_t attr;
+
+}
+
+
 class DeviceManager
 {
 
 public:
 
-	using Device = upcxx::gpu_default_device;
 
-	/* Give this process the entire GPU */
-    static upcxx::device_allocator<Device> ReserveAll()
-    {
-        size_t free, total;
-        CUDA_CHECK(cudaMemGetInfo(&free, &total));
 
-        auto allocator = upcxx::make_gpu_allocator<Device>(free);
-        return allocator;
-    }
-
+	/* Map this PE to a GPU */
     static void SetDevice()
     {
-        CUDA_CHECK(cudaSetDevice(upcxx::local_team().rank_me()));
+        cudaGetDeviceCount(&(globals::n_devs));
+        cudaSetDevice(globals::mpi_rank % globals::n_devs);
+
+        //TODO: Check to make sure only one PE per device
     }
 
 };
 
 
-namespace globals {
-
-	using Device = upcxx::gpu_default_device;
-	upcxx::device_allocator<Device> allocator;
-
-}
 
 void inferno_init()
 {
-    upcxx::init();
+    /* MPI */
+    MPI_Init(nullptr, nullptr);
+    MPI_Comm_rank(MPI_COMM_WORLD, &(globals::mpi_rank));
+    MPI_Comm_size(MPI_COMM_WORLD, &(globals::mpi_world_size));
 
 	/* GPU setup */
-
 	DeviceManager::SetDevice();
-	globals::allocator = DeviceManager::ReserveAll();
+
+    /* NVSHMEM */
+    nvshmemx_init_attr(NVSHMEMX_INIT_WITH_MPI_COMM, &globals::attr);
+
+
 	
 }
 
 
 void inferno_finalize()
 {
-
-	globals::allocator.destroy();
-
-    upcxx::finalize();
+    nvshmem_finalize();
+    MPI_Finalize();
 
 }
 
