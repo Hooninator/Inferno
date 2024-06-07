@@ -22,6 +22,9 @@
 #include <nvshmemx.h>
 
 #include <mpi.h>
+#include "Log.hpp"
+
+#define DEBUG 1
 
 
 #define CUDA_CHECK(call) {                                                 \
@@ -32,6 +35,9 @@
         exit(err);                                                         \
     }                                                                      \
 }
+
+#define ERROR(msg) {std::cerr<<msg<<std::endl; exit(1);}
+#define STR(v) {return std::to_string(v);}
 
 namespace inferno {
 
@@ -66,6 +72,7 @@ public:
 
 };
 
+Log * logptr;
 
 
 void inferno_init()
@@ -81,6 +88,10 @@ void inferno_init()
     /* NVSHMEM */
     nvshmemx_init_attr(NVSHMEMX_INIT_WITH_MPI_COMM, &globals::attr);
 
+    /* Logfiles */
+#ifdef DEBUG
+    logptr = new Log(globals::mpi_rank);
+#endif
 
 	
 }

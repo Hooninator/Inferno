@@ -4,10 +4,11 @@ project(Inferno VERSION 1.0.0 LANGUAGES CXX CUDA)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -rdc=true") 
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -rdc=true -ccbin CC") 
 set(CMAKE_CUDA_ARCHITECTURES "80")
 
 #cmake_policy(SET CMP0074 OLD)
@@ -31,6 +32,7 @@ set(NVSHMEM_HOME "/global/common/software/nersc9/nvshmem/2.11.0")
 # Include directories
 target_include_directories(Inferno PUBLIC include)
 target_include_directories(Inferno PUBLIC "${NVSHMEM_HOME}/include")
+target_include_directories(Inferno PUBLIC "$ENV{MPICH_DIR}/include")
 
 # Link MPI
 target_link_libraries(Inferno PUBLIC MPI::MPI_CXX)
@@ -40,10 +42,12 @@ target_link_libraries(Inferno PUBLIC "-L${NVSHMEM_HOME}/lib" -lnvshmem -lrt)
 set_target_properties(Inferno PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
 # Link CUDA libs
-target_link_libraries(Inferno PUBLIC "-L/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/math_libs/lib64/" -lcublas -lcusparse -lcuda -lcudart)
+target_link_libraries(Inferno PUBLIC "-L/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/math_libs/lib64/" -lcublas -lcusparse -lcuda -lcudart "-L$ENV{MPICH_DIR}/gtl/lib" -lmpi_gtl_cuda)
 
 # Driver
 add_executable(run_inferno tests/run_inferno.cu)
+
+target_compile_options(run_inferno PRIVATE  -Wno-deprecated-declarations)
 
 set_target_properties(run_inferno PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 
